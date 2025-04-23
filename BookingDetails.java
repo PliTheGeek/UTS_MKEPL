@@ -94,6 +94,14 @@ public class BookingDetails {
         return namaPemesan;
     }
 
+    public JenisKamar getJenisKamar() {
+        return jenisKamar;
+    }
+
+    public int getJumlahTamu() {
+        return jumlahTamu;
+    }
+
     // ... other getters ...
 
     // Business logic methods
