@@ -1,82 +1,73 @@
 public class PaymentDetails {
     private int jumlahMalam;
     private double hargaPerMalam;
-    private String kodeVoucher;
-    private boolean sudahDibayar;
-    private boolean statusAktif;
+    private Voucher voucher;
+    private StatusPembayaran status;
 
-    // Constants
     private static final double EXTRA_GUEST_CHARGE = 100000;
-    private static final double VOUCHER_DISCOUNT = 50000;
+    private static final int MAX_STANDARD_GUESTS = 2;  // Extract magic number
 
-    // Constructor
     public PaymentDetails(int jumlahMalam, double hargaPerMalam,
             String kodeVoucher, boolean sudahDibayar, boolean statusAktif) {
         this.jumlahMalam = jumlahMalam;
         this.hargaPerMalam = hargaPerMalam;
-        this.kodeVoucher = kodeVoucher;
-        this.sudahDibayar = sudahDibayar;
-        this.statusAktif = statusAktif;
+        this.voucher = new Voucher(kodeVoucher);
+        
+        // Fix the status assignment logic
+        if (!statusAktif) {
+            this.status = StatusPembayaran.TIDAK_AKTIF;
+        } else {
+            this.status = sudahDibayar ? 
+                StatusPembayaran.SUDAH_DIBAYAR : 
+                StatusPembayaran.BELUM_DIBAYAR;
+        }
     }
 
-    // Business logic
-    public double calculateTotal(int numberOfGuests) {
-        if (!statusAktif)
+    public PaymentDetails(double hargaPerMalam, String kodeVoucher) {
+        this.hargaPerMalam = hargaPerMalam;
+        this.voucher = new Voucher(kodeVoucher);
+        this.jumlahMalam = 1;
+        this.status = StatusPembayaran.BELUM_DIBAYAR;
+    }
+
+    public double hitungTotal(int jumlahTamu) {
+        if (!status.isAktif()) {
             return 0;
-
-        double total = jumlahMalam * hargaPerMalam;
-        total += calculateExtraGuestCharge(numberOfGuests);
-        total -= calculateVoucherDiscount();
-
-        return total;
+        }
+        return hitungBiayaKamar() + 
+               hitungBiayaTambahan(jumlahTamu) - 
+               hitungDiskonVoucher();
     }
 
-    private double calculateExtraGuestCharge(int numberOfGuests) {
-        return numberOfGuests > 2 ? (numberOfGuests - 2) * EXTRA_GUEST_CHARGE : 0;
+    private double hitungBiayaKamar() {
+        return jumlahMalam * hargaPerMalam;
     }
 
-    private double calculateVoucherDiscount() {
-        return (kodeVoucher != null && kodeVoucher.length() > 3) ? VOUCHER_DISCOUNT : 0;
+    private double hitungBiayaTambahan(int jumlahTamu) {
+        return jumlahTamu > MAX_STANDARD_GUESTS ? 
+            (jumlahTamu - MAX_STANDARD_GUESTS) * EXTRA_GUEST_CHARGE : 0;
     }
 
-    // Getters and Setters
-    public int getJumlahMalam() {
-        return jumlahMalam;
+    private double hitungDiskonVoucher() {
+        return voucher.hitungDiskon();
     }
 
-    public void setJumlahMalam(int jumlahMalam) {
-        this.jumlahMalam = jumlahMalam;
-    }
-
+    // Essential getters and setters
     public double getHargaPerMalam() {
         return hargaPerMalam;
     }
 
-    public void setHargaPerMalam(double hargaPerMalam) {
-        this.hargaPerMalam = hargaPerMalam;
-    }
-
     public String getKodeVoucher() {
-        return kodeVoucher;
-    }
-
-    public void setKodeVoucher(String kodeVoucher) {
-        this.kodeVoucher = kodeVoucher;
+        return voucher.getKode();
     }
 
     public boolean isSudahDibayar() {
-        return sudahDibayar;
+        return status.isSudahDibayar();
     }
 
     public void setSudahDibayar(boolean sudahDibayar) {
-        this.sudahDibayar = sudahDibayar;
-    }
-
-    public boolean isStatusAktif() {
-        return statusAktif;
-    }
-
-    public void setStatusAktif(boolean statusAktif) {
-        this.statusAktif = statusAktif;
+        this.status = sudahDibayar ? 
+            StatusPembayaran.SUDAH_DIBAYAR : 
+            StatusPembayaran.BELUM_DIBAYAR;
     }
 }
